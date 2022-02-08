@@ -58,19 +58,31 @@ router.post('/', (req, res) => {
 })
 
 router.put('/:id', (req,res) => {
-   if(!req.params.id) {
-    res.status(404).json({
-        message: 'The post with the specified ID does not exist'
-    })
-} else {
-    if(!req.body.title || !req.body.contents) {
-    res.status(400).json({
-        message: 'Please provide title and contents for the post'
+  const { title, contents } = req.body
+    if(!title || !contents) {
+        res.status(400).json({
+            message: 'Please provide title and contents for the post'
         })
     } else {
-    Post.update(req.params.id, req.body)
+        Post.findById(req.params.id)
         .then(post => {
-            res.status(201).json(post)
+            if(!post) {
+                res.status(404).json({
+                    message: 'The post with the specified ID does not exist'
+                })
+            } else {
+                return Post.update(req.params.id, req.body)
+            }
+        })
+        .then(data => {
+            if(data) {
+                return Post.findById(req.params.id)
+            }
+        })
+        .then(post => {
+            if(post) {
+                res.json(post)
+            }
         })
         .catch(err => {
         res.status(500).json({
@@ -78,7 +90,6 @@ router.put('/:id', (req,res) => {
         })
     })
     }
-}
 })
 
 router.delete('/:id', async (req,res) => {
